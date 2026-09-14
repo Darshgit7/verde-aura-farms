@@ -1,0 +1,17 @@
+node_modules/
+dist/
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+.env
+.env.*
+!.env.example
+
+# Excel enquiry data
+*.xlsx
+
+appsettings.Production.json
+appsettings.Development.json
