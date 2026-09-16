@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using VerdeAuraFarms.Api.Data;
 using VerdeAuraFarms.Api.Extensions;
 using VerdeAuraFarms.Api.Services;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,14 +25,51 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
-builder.Services.AddDbContext<AppDbContext>(options =>
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is required.");
+
+if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+    connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
 {
-    if (builder.Environment.IsProduction())
-        options.UseNpgsql(connectionString, sql => sql.EnableRetryOnFailure(3));
-    else
-        options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure(3));
-});
+    var uri = new Uri(connectionString);
+
+    var userInfo = uri.UserInfo.Split(':', 2);
+
+    if (userInfo.Length != 2)
+    {
+        throw new InvalidOperationException(
+            "Invalid PostgreSQL connection URL: username/password not found.");
+    }
+
+    var username = Uri.UnescapeDataString(userInfo[0]);
+    var password = Uri.UnescapeDataString(userInfo[1]);
+    var database = uri.AbsolutePath.TrimStart('/');
+
+    var npgsqlBuilder = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Database = Uri.UnescapeDataString(database),
+        Username = username,
+        Password = password,
+        SslMode = Npgsql.SslMode.Require
+    };
+
+    connectionString = npgsqlBuilder.ConnectionString;
+}
+
+if (connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+    connectionString.Contains("Username=", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString, sql =>
+            sql.EnableRetryOnFailure(3)));
+}
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 if (allowedOrigins.Length == 0 && builder.Environment.IsProduction())
