@@ -8,6 +8,24 @@ namespace VerdeAuraFarms.Api.Services;
 
 public sealed class EnquiryService(AppDbContext db, ITurnstileVerifier turnstileVerifier, IConfiguration configuration, IExcelExportService excelExportService) : IEnquiryService
 {
+    private static DateTime? ConvertIndiaTimeToUtc(DateTime? dateTime)
+{
+    if (!dateTime.HasValue)
+        return null;
+
+    var indiaTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+        OperatingSystem.IsWindows()
+            ? "India Standard Time"
+            : "Asia/Kolkata");
+
+    var unspecified = DateTime.SpecifyKind(
+        dateTime.Value,
+        DateTimeKind.Unspecified);
+
+    return TimeZoneInfo.ConvertTimeToUtc(
+        unspecified,
+        indiaTimeZone);
+}
     private static readonly HashSet<string> AllowedServices = new(StringComparer.OrdinalIgnoreCase)
     {
         "Moringa Farming Consultation", "Land Assessment", "Farm Planning", "Plantation Guidance",
@@ -45,11 +63,11 @@ public sealed class EnquiryService(AppDbContext db, ITurnstileVerifier turnstile
             Village = string.IsNullOrWhiteSpace(request.Village) ? null : request.Village.Trim(),
             LandArea = string.IsNullOrWhiteSpace(request.LandArea) ? null : request.LandArea.Trim(),
             Service = service,
-            PreferredDate = request.PreferredDate?.Date,
+            PreferredDate = ConvertIndiaTimeToUtc(request.PreferredDate),
             Message = string.IsNullOrWhiteSpace(request.Message) ? null : request.Message.Trim(),
             Status = "New",
-            CreatedDateUtc = now,
-            UpdatedDateUtc = now
+            CreatedDateUtc = DateTime.UtcNow,
+            UpdatedDateUtc = DateTime.UtcNow
         };
 
         db.Enquiries.Add(enquiry);
