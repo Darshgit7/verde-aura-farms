@@ -1,28 +1,12 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-
   server: {
-    host: true,
-
-    allowedHosts: [
-      ".trycloudflare.com"
-    ],
-
     proxy: {
-      "/api": {
-        target: "https://localhost:7147",
-        changeOrigin: true,
-        secure: false
-      },
-
-      "/health": {
-        target: "https://localhost:7147",
-        changeOrigin: true,
-        secure: false
-      }
+      '/api': 'http://localhost:5147',
+      '/health': 'http://localhost:5147'
     }
   }
 });

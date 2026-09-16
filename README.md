@@ -62,3 +62,9 @@ npm run dev
 This starts the frontend at `http://localhost:5173` and the backend at `https://localhost:7147`.
 
 For local development, the Vite proxy uses `secure: false` to accept the ASP.NET Core development certificate. Do not use this setting as a production security configuration.
+
+### Database providers
+- Local Development: SQL Server (configured in `appsettings.Development.json`).
+- Production on Render: PostgreSQL (configured through `ConnectionStrings__DefaultConnection`).
+- The API automatically selects PostgreSQL in Production and SQL Server in Development.
+- On first Production startup, EF Core `EnsureCreatedAsync()` creates the initial schema in the empty PostgreSQL database. For future schema changes, use proper EF Core migrations rather than relying on `EnsureCreatedAsync()`.

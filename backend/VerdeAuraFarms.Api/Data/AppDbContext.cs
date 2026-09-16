@@ -20,8 +20,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         entity.Property(x => x.Service).HasMaxLength(100).IsRequired();
         entity.Property(x => x.Message).HasMaxLength(2000);
         entity.Property(x => x.Status).HasMaxLength(30).IsRequired();
-        entity.Property(x => x.CreatedDateUtc).HasColumnType("datetime2");
-        entity.Property(x => x.UpdatedDateUtc).HasColumnType("datetime2");
+        // Let each EF Core provider choose the native DateTime column type.
         entity.HasIndex(x => new { x.MobileNumber, x.CreatedDateUtc });
         entity.HasIndex(x => x.Status);
     }

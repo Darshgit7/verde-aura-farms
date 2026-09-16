@@ -60,3 +60,6 @@ For Azure, prefer Key Vault / managed identity or secure App Service configurati
 - Public POST is stateless and does not use cookie authentication; CSRF protection becomes required when authenticated browser/session operations are introduced in Phase 3.
 - Do not log request bodies, mobile numbers, email addresses, or other unnecessary personal data.
 - Place the API behind HTTPS and, in production, preferably behind a reverse proxy/WAF such as Azure Application Gateway/Front Door.
+
+## Database providers
+Local development continues to use SQL Server. Production uses PostgreSQL when `ASPNETCORE_ENVIRONMENT=Production`. Set `ConnectionStrings__DefaultConnection` in Render to the PostgreSQL Internal Database URL.
